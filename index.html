@@ -9,11 +9,11 @@
     <title>Lễ Tốt Nghiệp - Nguyễn Hoàn Bão</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;family=Hanken+Grotesk:wght@300;400;500;600;700&amp;family=Great+Vibes&amp;display=swap"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&family=Great+Vibes&display=swap"
       rel="stylesheet"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
       rel="stylesheet"
     />
     <script id="tailwind-config">
@@ -55,32 +55,50 @@
       };
     </script>
     <style>
-      /* QUAN TRỌNG: Fix click bị chặn */
-      * {
-        -webkit-tap-highlight-color: transparent;
-      }
+      /* ===== CRITICAL MOBILE FIX ===== */
 
-      canvas {
-        pointer-events: none !important;
+      /* 1. Canvas KHÔNG ĐƯỢC chặn touch events */
+      #confetti {
         position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        pointer-events: none !important;
+        touch-action: none !important;
         z-index: 1 !important;
       }
 
-      button,
-      a,
-      .btn,
-      [role="button"] {
-        position: relative;
-        z-index: 100 !important;
-        cursor: pointer !important;
-        pointer-events: auto !important;
+      /* 2. Reset mọi thứ, đảm bảo buttons luôn nhận touch */
+      * {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+        box-sizing: border-box;
       }
 
+      /* 3. Buttons & links: z-index cao, touch-action auto */
       #confirmRsvpBtn,
-      .map-btn,
-      a[href*="maps"] {
-        z-index: 101 !important;
-        position: relative !important;
+      #mapButton,
+      #closeToastBtn {
+        position: relative;
+        z-index: 500 !important;
+        touch-action: manipulation !important;
+        -webkit-touch-callout: none;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      /* 4. Main content phải cao hơn canvas */
+      main,
+      header,
+      footer {
+        position: relative;
+        z-index: 10 !important;
+      }
+
+      /* 5. Toast overlay */
+      #rsvpToast {
+        z-index: 9999 !important;
       }
 
       .scrapbook-bg {
@@ -99,34 +117,27 @@
           transform: translateY(0) scale(1);
         }
       }
-      .toast-notification {
+
+      .toast-inner {
         animation: slideInToast 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
       }
 
-      /* Đảm bảo vùng click rõ ràng */
-      button,
-      a {
-        min-height: 44px;
-        min-width: 44px;
+      /* Active states cho mobile feedback */
+      #confirmRsvpBtn:active {
+        opacity: 0.85;
+        transform: scale(0.98);
+      }
+      #mapButton:active {
+        opacity: 0.85;
+        transform: scale(0.98);
       }
     </style>
   </head>
   <body
     class="bg-background text-on-surface font-body-md scrapbook-bg min-h-screen flex flex-col items-center"
   >
-    <!-- Canvas confetti - đặt ở dưới cùng để không che nút -->
-    <canvas
-      id="confetti"
-      style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 1;
-      "
-    ></canvas>
+    <!-- Canvas confetti - z-index thấp nhất, pointer-events none hoàn toàn -->
+    <canvas id="confetti"></canvas>
 
     <!-- Header -->
     <header
@@ -150,9 +161,7 @@
     </header>
 
     <!-- Main Content -->
-    <main
-      class="flex-grow w-full max-w-[1140px] px-4 py-8 md:px-8 md:py-12 relative z-20"
-    >
+    <main class="flex-grow w-full max-w-[1140px] px-4 py-8 md:px-8 md:py-12">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <!-- Left Column -->
         <div class="lg:col-span-5 flex flex-col items-center">
@@ -340,12 +349,12 @@
               </div>
             </div>
 
-            <!-- BUTTONS - ĐÃ ĐƯỢC FIX -->
+            <!-- BUTTONS -->
             <div class="mt-8 flex flex-col sm:flex-row gap-3">
               <button
                 id="confirmRsvpBtn"
-                class="flex-1 bg-primary text-white py-3 px-4 font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-blue-900 transition"
-                style="min-height: 52px"
+                type="button"
+                class="flex-1 bg-primary text-white py-4 px-4 font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-blue-900 transition-all"
               >
                 <span class="material-symbols-outlined">check_circle</span>
                 XÁC NHẬN THAM DỰ
@@ -353,10 +362,10 @@
 
               <a
                 id="mapButton"
-                class="flex-1 border-2 border-secondary text-secondary py-3 px-4 font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-secondary hover:text-white transition"
-                style="min-height: 52px"
                 href="https://maps.app.goo.gl/7Ht7cfyCM5V8LcEK8"
                 target="_blank"
+                rel="noopener noreferrer"
+                class="flex-1 border-2 border-secondary text-secondary py-4 px-4 font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-secondary hover:text-white transition-all text-center"
               >
                 <span class="material-symbols-outlined">map</span>
                 XEM BẢN ĐỒ CHI TIẾT
@@ -368,7 +377,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="w-full mt-4 z-20 relative">
+    <footer class="w-full mt-4">
       <div class="bg-primary text-white py-4 px-4">
         <div
           class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3"
@@ -401,13 +410,21 @@
       </div>
     </footer>
 
-    <!-- Toast -->
+    <!-- Toast Modal -->
     <div
       id="rsvpToast"
-      class="fixed inset-0 flex items-center justify-center z-[200] pointer-events-none opacity-0 transition-opacity duration-300"
+      style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      "
     >
       <div
-        class="pointer-events-auto bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 text-center"
+        class="toast-inner bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 text-center"
       >
         <div class="bg-green-100 rounded-full p-3 inline-flex mb-3">
           <span class="material-symbols-outlined text-green-700 text-3xl"
@@ -423,7 +440,9 @@
         </p>
         <button
           id="closeToastBtn"
+          type="button"
           class="mt-5 bg-primary text-white px-5 py-2 rounded-full text-sm hover:bg-blue-900 transition"
+          style="position: relative; z-index: 10000; touch-action: manipulation"
         >
           Đóng
         </button>
@@ -497,60 +516,49 @@
           const now = new Date().getTime();
           const d = target - now;
           if (d < 0) return;
-          document.getElementById("days") &&
-            (document.getElementById("days").innerText = Math.floor(
-              d / (1000 * 60 * 60 * 24),
-            )
-              .toString()
-              .padStart(2, "0"));
-          document.getElementById("hours") &&
-            (document.getElementById("hours").innerText = Math.floor(
-              (d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-            )
-              .toString()
-              .padStart(2, "0"));
-          document.getElementById("minutes") &&
-            (document.getElementById("minutes").innerText = Math.floor(
-              (d % (1000 * 60 * 60)) / (1000 * 60),
-            )
-              .toString()
-              .padStart(2, "0"));
-          document.getElementById("seconds") &&
-            (document.getElementById("seconds").innerText = Math.floor(
-              (d % (1000 * 60)) / 1000,
-            )
-              .toString()
-              .padStart(2, "0"));
+          const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = val.toString().padStart(2, "0");
+          };
+          set("days", Math.floor(d / (1000 * 60 * 60 * 24)));
+          set(
+            "hours",
+            Math.floor((d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          );
+          set("minutes", Math.floor((d % (1000 * 60 * 60)) / (1000 * 60)));
+          set("seconds", Math.floor((d % (1000 * 60)) / 1000));
         }, 1000);
       })();
     </script>
 
-    <!-- MAIN FIX: Xử lý click nút -->
+    <!-- Button Logic -->
     <script>
       (function () {
-        // Hàm hiện toast
+        const toast = document.getElementById("rsvpToast");
+
         function showToast() {
-          const toast = document.getElementById("rsvpToast");
-          if (toast) {
-            toast.classList.remove("opacity-0", "pointer-events-none");
-            toast.classList.add("opacity-100", "pointer-events-auto");
-          }
-          // Confetti ăn mừng
+          if (!toast) return;
+          toast.style.display = "flex";
+          // Burst confetti
           for (let i = 0; i < 80; i++) {
             setTimeout(() => {
               const conf = document.createElement("div");
-              conf.style.position = "fixed";
-              conf.style.width = Math.random() * 12 + 4 + "px";
-              conf.style.height = conf.style.width;
-              conf.style.backgroundColor = ["#001e40", "#b22b1d", "#fbbf24"][
-                Math.floor(Math.random() * 3)
-              ];
-              conf.style.borderRadius = "2px";
-              conf.style.left =
-                window.innerWidth / 2 + (Math.random() - 0.5) * 300 + "px";
-              conf.style.top = window.innerHeight / 2 + "px";
-              conf.style.zIndex = "9999";
-              conf.style.pointerEvents = "none";
+              conf.style.cssText = [
+                "position:fixed",
+                "width:" + (Math.random() * 12 + 4) + "px",
+                "height:" + (Math.random() * 12 + 4) + "px",
+                "background:" +
+                  ["#001e40", "#b22b1d", "#fbbf24"][
+                    Math.floor(Math.random() * 3)
+                  ],
+                "border-radius:2px",
+                "left:" +
+                  (window.innerWidth / 2 + (Math.random() - 0.5) * 300) +
+                  "px",
+                "top:" + window.innerHeight / 2 + "px",
+                "z-index:9998",
+                "pointer-events:none",
+              ].join(";");
               document.body.appendChild(conf);
               conf.animate(
                 [
@@ -568,43 +576,47 @@
         }
 
         function hideToast() {
-          const toast = document.getElementById("rsvpToast");
-          if (toast) {
-            toast.classList.add("opacity-0", "pointer-events-none");
-            toast.classList.remove("opacity-100", "pointer-events-auto");
-          }
+          if (toast) toast.style.display = "none";
         }
 
-        // Lấy nút và gán sự kiện
+        // Confirm button
         const confirmBtn = document.getElementById("confirmRsvpBtn");
         if (confirmBtn) {
-          // Xóa hết event cũ
-          const newBtn = confirmBtn.cloneNode(true);
-          confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
-          // Gán event mới
-          newBtn.onclick = function (e) {
-            e.preventDefault();
+          confirmBtn.addEventListener("click", function (e) {
             e.stopPropagation();
             showToast();
-            return false;
-          };
-          newBtn.ontouchstart = function (e) {
-            e.preventDefault();
-            showToast();
-            return false;
-          };
-          console.log("✅ Nút xác nhận đã hoạt động!");
+          });
+          // Touch fallback cho iOS Safari cũ
+          confirmBtn.addEventListener(
+            "touchend",
+            function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              showToast();
+            },
+            { passive: false },
+          );
         }
 
+        // Close button
         const closeBtn = document.getElementById("closeToastBtn");
         if (closeBtn) {
-          closeBtn.onclick = hideToast;
+          closeBtn.addEventListener("click", hideToast);
+          closeBtn.addEventListener(
+            "touchend",
+            function (e) {
+              e.preventDefault();
+              hideToast();
+            },
+            { passive: false },
+          );
         }
 
-        // Test nút bản đồ
-        const mapBtn = document.getElementById("mapButton");
-        if (mapBtn) {
-          console.log("✅ Nút bản đồ: " + mapBtn.href);
+        // Close toast khi click nền mờ
+        if (toast) {
+          toast.addEventListener("click", function (e) {
+            if (e.target === toast) hideToast();
+          });
         }
       })();
     </script>
